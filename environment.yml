@@ -1,0 +1,13 @@
+# Conda environment for Multi-Camera Person Tracking & Re-Identification.
+# Create from the project root:
+#   conda env create -f environment.yml
+#   conda activate multicam-reid
+#   pip install -U pip
+#   pip install -e ".[dev]"
+name: multicam-reid
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - ffmpeg

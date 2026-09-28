@@ -1,0 +1,43 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.conda/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+dist/
+build/
+
+# Weights (license-gated; download via scripts/download_models.py)
+models/**/*.pth
+models/**/*.pt
+models/**/*.onnx
+models/**/*.ckpt
+models/**/*.bin
+!models/MANIFEST.yaml
+
+# Runtime data (including nested EPFL POM videos)
+data/**/*.avi
+data/**/*.mp4
+data/**/*.mkv
+data/**/*.txt
+data/**/*.zip
+data/**/*.db
+*.avi
+*.mp4
+outputs/
+data/uploads/
+data/gui_snapshots/
+data/gui_reviews/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+data/
+models/

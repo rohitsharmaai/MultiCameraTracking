@@ -1,0 +1,178 @@
+# Uncalibrated starting values. Calibrate against project footage (Section 34 / 37).
+# Do not treat these as production-ready.
+
+tracking:
+  min_confirmed_frames: 3
+  max_lost_frames: 30
+  iou_threshold: 0.3
+  high_score_threshold: 0.6
+  low_score_threshold: 0.1
+  max_age: 30
+  init_age: 3
+  extract_stride: 4
+
+detection:
+  person_class_id: 1
+  confidence_threshold: 0.4
+  input_resolution: 704
+  nms_threshold: 0.5
+
+observation:
+  top_k_body: 8
+  top_k_face: 3
+  min_body_quality: 0.30
+  min_face_quality: 0.45
+  min_mask_coverage: 0.25
+  min_bbox_area: 1600
+  min_sharpness: 20.0
+  viewpoint_bins: [front, side, back]
+  buffer_frames: 30
+  # Experiment: only use a detected face if its centre lies inside a single
+  # person bounding box. Faces shared by overlapping boxes are ignored.
+  face_require_unique_bbox: true
+  # Do not make a body embedding from a crop whose box is covered more than
+  # this fraction by other people's boxes: the crop (and the segmentation
+  # mask) then contains two people. 1.0 disables the check.
+  max_body_overlap: 0.35
+  # Faces smaller than this (shorter side, pixels) get no face embedding and
+  # no face quality: upsampled to AuraFace's 112x112 they are noise. On the
+  # 360x288 EPFL clips faces are ~15x19 px, so the face never votes there.
+  min_face_px: 32
+  # Append upper/lower-body clothing colour (HSV histograms inside the person
+  # mask) to the OSNet body vector; body similarity becomes OSNet cosine x
+  # the weaker part colour match. See src/reid/colour.py.
+  body_colour: true
+
+reid:
+  # Body ReID model: YoutuReID (default, see src/reid/youtu.py for the
+  # benchmark) or OSNet-x1.0. Embeddings of different models are never
+  # compared, so switching model means earlier galleries stop matching:
+  # reset the gallery and re-process the videos after a switch.
+  body_model: YoutuReID
+  # Similarity of a track to an ID = median over the track's last 5 crops of
+  # each crop's k-th best match in the ID's gallery (k = gallery_support_k),
+  # so neither one lucky query crop nor one contaminated gallery crop can
+  # decide. Calibrated on 4p-c0 (YoutuReID x colour, every 5-crop window of
+  # every track vs each person's gallery): different people <= 0.55, same
+  # person >= 0.65 for 90% of tracks. Recalibrate if body_model changes.
+  gallery_support_k: 3
+  body_similarity_threshold: 0.58
+  face_similarity_threshold: 0.45
+  minimum_score_margin: 0.08
+  gallery_size: 20
+  # Never let the pipeline delete or overwrite saved data by itself. With this
+  # false (default) the galleries keep EVERY embedding; nothing is removed
+  # automatically. Set true only if you want the old gallery_size cap back.
+  # People/images are removed only through the explicit GUI delete buttons.
+  evict_embeddings: false
+  # Two identities whose best body cosine is >= this are flagged as "looks like
+  # the same person" and their most-similar body crops are saved for review.
+  similar_body_threshold: 0.55
+  top_k_observations: 8
+  body_dim: 512
+  face_dim: 512
+  candidate_k: 32
+
+identity:
+  create_new_id_only_after_rejection: true
+  hysteresis_enabled: true
+  hysteresis_switch_margin: 0.15
+  stabilization_frames: 8
+  unresolved_hold_frames: 15
+  new_id_prefix: "P"
+  new_id_width: 4
+  require_body_for_id: false
+  require_face_for_id: false
+  base_body_quality: 0.45
+  base_face_quality: 0.50
+  refine_give_up_frames: 60
+  new_id_confirmation_frames: 30
+  new_id_max_frames: 180
+  # Two confirmed tracks visible in the same frame of one camera are two
+  # different people for the rest of the run ("cannot-link"). Neither may take
+  # the Global ID the other holds, even in later frames where only one of them
+  # is visible. Boxes overlapping by >= cannot_link_max_iou are treated as a
+  # possible duplicate detection of one person and not linked.
+  # DISABLED on purpose for now: a shared ID in one frame is kept visible as
+  # the symptom of a similarity failure. Identity confusion is being fixed
+  # in the appearance matching first; turn this on again afterwards.
+  exclusive_per_frame: false
+  cannot_link_max_iou: 0.5
+  # If two such tracks already share an ID, the one that took it first keeps
+  # it and the other moves (with the embeddings/crops it added this run) to a
+  # new provisional ID. Moves evidence; never deletes it.
+  split_conflicting_tracks: true
+  # A track may use an ID above body_similarity_threshold, but only adds its
+  # crops to that ID's gallery at >= enroll_threshold, so a borderline match
+  # cannot widen the gallery and pull in look-alikes (snowball).
+  enroll_threshold: 0.65
+  # A new track whose best match is within unclear_band below the threshold
+  # stays unresolved for up to unclear_wait_seconds collecting crops before
+  # it gets a new ID (on 4p-c0 new people scored <= 0.32 against everyone,
+  # fragments of known people 0.42-0.53 against the right one).
+  unclear_band: 0.20
+  unclear_wait_seconds: 3.0
+  # A new track must be observed this long before it can get a new ID (its
+  # first crops are often partial or blurred).
+  new_id_min_seconds: 1.0
+  # The local tracker associates boxes by overlap only, so when two boxes
+  # overlap by >= crossing_iou it may hand one person's box to another. Such
+  # a track is "unverified": it shows no ID and adds nothing to any gallery
+  # until a crop taken with the boxes apart again (IoU < crossing_iou; crops
+  # still showing two people are dropped by max_body_overlap) confirms its
+  # own ID (by reid.minimum_score_margin) or clearly matches another ID
+  # (move there, by drift_margin).
+  verify_crossings: true
+  crossing_iou: 0.3
+  # Re-check established tracks on every crop: if a track's fresh body crop
+  # matches another ID better by drift_margin (or matches nobody, not even
+  # its own ID) for drift_confirmations crops in a row, the tracker has
+  # handed the box to another person; move the track to that ID / a new ID.
+  verify_track_drift: true
+  drift_margin: 0.15
+  drift_confirmations: 3
+  drift_recent_seconds: 3.0
+
+scoring:
+  w_body: 0.45
+  w_face: 0.30
+  w_time: 0.10
+  w_camera: 0.10
+  w_motion: 0.05
+  # A modality whose cosine is BELOW its own match threshold contributes no
+  # weight, so a non-matching face can never dilute/veto a strong body match
+  # (and vice versa). ON -> can over-merge different people with similar bodies;
+  # OFF -> safer (a confident face can veto), merge same people manually.
+  drop_weak_modality: false
+  # Valid side/occluded crops in the Lab smoke run scored ~0.34; keep them
+  # available for matching while the visual similarity threshold prevents
+  # weak matches.
+  body_quality_gate: 0.30
+  face_quality_gate: 0.45
+  # When the query pose and the best-matching gallery face come from different
+  # viewpoints (e.g. front query vs side gallery), the face cosine is
+  # unreliable. Multiply w_face by this factor for that candidate instead of
+  # letting a cross-view face dilute/veto a strong body match. 1.0 = off,
+  # 0.0 = ignore the face entirely on a view mismatch.
+  face_view_mismatch_scale: 0.15
+
+camera_transition:
+  topology_enabled: true
+  temporal_constraints_enabled: true
+  default_min_transition_seconds: 0.5
+  default_max_transition_seconds: 180.0
+  unknown_edge_penalty: 0.15
+
+overlap:
+  enabled_only_when_cameras_are_simultaneous: true
+  same_timestamp_required: true
+  score_margin: 0.10
+  timestamp_tolerance_seconds: 0.04
+
+quality:
+  laplacian_blur_weight: 0.25
+  area_weight: 0.15
+  aspect_weight: 0.10
+  occlusion_weight: 0.20
+  pose_weight: 0.20
+  detector_weight: 0.10

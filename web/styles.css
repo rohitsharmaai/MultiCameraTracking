@@ -1,0 +1,231 @@
+:root {
+  --bg: #0f1419;
+  --panel: #171d24;
+  --line: #2a3340;
+  --text: #e8eef4;
+  --muted: #93a0b0;
+  --new: #3db8e8;
+  --reid: #3dce6a;
+  --same: #e0b24a;
+  --unres: #e05a4a;
+  --btn: #2d6cdf;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }
+header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+header p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.danger { background: #7a2430; color: white; border: 0; border-radius: 6px; padding: 8px 12px; }
+.main { display: grid; grid-template-columns: 280px minmax(360px, 1fr) 380px; min-height: 0; height: 100%; }
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 1fr; }
+  /* Stacked layout: rows are content-sized, so pin the video box and the
+     log to fixed heights. Appended log lines must never resize the video.
+     The splitter is hidden — dragging makes no sense in this layout. */
+  .splitter { display: none; }
+  .stage { grid-template-rows: auto auto; }
+  .frame-wrap { flex: 0 0 auto; height: 46vh; }
+  .log { flex: 0 0 auto; height: 240px; }
+}
+
+.col { padding: 14px; overflow: auto; border-right: 1px solid var(--line); min-height: 0; }
+.col:last-child { border-right: 0; }
+h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+label { display: block; margin: 10px 0 6px; color: var(--muted); font-size: 12px; }
+input[type="file"], input[type="number"] { width: 100%; color: var(--text); background: #10151b; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+.primary { width: 100%; margin-top: 12px; background: var(--btn); color: white; border: 0; border-radius: 6px; padding: 10px; font-weight: 600; }
+.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.check { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; color: var(--text); font-size: 13px; line-height: 1.35; }
+.check input { margin-top: 3px; width: auto; }
+.transport-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex: 0 0 auto;
+}
+.transport-row .btn {
+  background: #223044;
+  color: white;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.transport-row .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.transport-row .btn-play  { background: #1d4f3a; }
+.transport-row .btn-pause { background: #5a4318; }
+.transport-row .btn-stop  { background: #5a2430; }
+.transport-row .scrub-wrap {
+  flex: 1 1 auto;
+  min-width: 60px;
+  position: relative;
+  margin: 0;
+}
+.transport-row #scrub { width: 100%; display: block; }
+.transport-row .frame-ids {
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 180px;
+}
+.transport-row #followLive {
+  background: #223044;
+  color: white;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.transport-row #followLive:disabled { opacity: 0.4; cursor: not-allowed; }
+.transport-row .download { color: var(--new); white-space: nowrap; font-size: 12px; }
+.meta, .legend { color: var(--muted); font-size: 12px; }
+.legend { margin-top: 16px; }
+.legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+.dot-new { background: var(--new); }
+.dot-reid { background: var(--reid); }
+.dot-same { background: var(--same); }
+.dot-unres { background: var(--unres); }
+
+.stage {
+  display: grid;
+  /* 3 rows: video panel, splitter handle, log panel.
+     JS overrides this with a px value once the user drags or on load. */
+  grid-template-rows: minmax(300px, 1fr) 6px minmax(120px, 280px);
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.splitter {
+  height: 6px;
+  background: var(--line);
+  cursor: row-resize;
+  position: relative;
+  z-index: 5;
+  transition: background 120ms;
+}
+.splitter:hover,
+.splitter.dragging {
+  background: var(--btn);
+}
+.splitter::before {
+  /* Tiny grip dots in the center — visual affordance that it's draggable */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+}
+.stage-top {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.stage-bottom {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 14px 14px;
+}
+.frame-wrap {
+  /* basis 0: the image's intrinsic size must never drive the layout,
+     so the video box stays the same size as log lines arrive */
+  flex: 1 1 0;
+  min-height: 300px;
+  background: #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.stage img {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  background: #000;
+  object-fit: contain;
+}
+.progress { margin-top: 6px; color: var(--muted); font-size: 12px; flex: 0 0 auto; }
+.bar { height: 4px; background: #10151b; border-radius: 99px; overflow: hidden; margin-top: 4px; flex: 0 0 auto; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--btn); }
+.scrub-wrap { position: relative; flex: 0 0 auto; }
+#scrub { width: 100%; }
+.marks { position: absolute; left: 8px; right: 8px; top: 0; height: 8px; pointer-events: none; }
+.marks i { position: absolute; top: 0; width: 3px; height: 8px; border-radius: 1px; }
+.marks i.new { background: var(--new); }
+.marks i.same { background: var(--same); }
+.marks i.unres { background: var(--unres); }
+.download { color: var(--new); }
+.log {
+  /* basis 0 + internal scroll: line count never changes the layout */
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #10151b;
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+.log div { padding: 6px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.log div:hover { color: var(--text); }
+.log .new { color: var(--new); }
+.log .reid { color: var(--reid); }
+.log .same { color: var(--same); }
+.stage-bottom h2 { flex: 0 0 auto; }
+#savedVideos { flex: 0 0 auto; max-height: 72px; overflow: auto; }
+
+.card { background: #12181f; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+.card.clickable { cursor: pointer; transition: border-color 120ms, transform 120ms; }
+.card.clickable:hover { border-color: var(--new); transform: translateY(-1px); }
+.card-cta { margin-top: 8px; color: var(--new); font-size: 12px; font-weight: 600; }
+.card.flash { outline: 2px solid var(--reid); }
+.card h3 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; }
+.badge { font-size: 11px; padding: 2px 6px; border-radius: 99px; }
+.badge.new { background: #16384a; color: var(--new); }
+.badge.reid { background: #16381f; color: var(--reid); }
+.badge.same { background: #3a3014; color: var(--same); }
+.thumbs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.thumbs img { width: 64px; height: 96px; object-fit: cover; border-radius: 4px; background: #000; }
+.id-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.id-photos figure { margin: 0; background: #0b1016; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.id-photos figcaption { padding: 4px 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.id-photos img { display: block; width: 100%; height: 120px; object-fit: cover; background: #000; }
+.id-photos .noimg { height: 120px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+.obs { color: var(--muted); font-size: 12px; }
+.empty { color: var(--muted); padding: 20px 0; }
+
+/* Bounding-box visibility controls */
+.vis-all { margin: 0 0 10px; align-items: center; }.card h3 { align-items: center; }
+.card h3 .hdr-left { display: inline-flex; align-items: center; gap: 8px; }
+.card h3 input.vis { width: auto; margin: 0; cursor: pointer; }
+.badge.archived { background: #2a3340; color: var(--muted); }
+/* Gallery actions + similar-body duplicates */
+.gallery-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.danger.small, .primary.small { width: auto; margin: 0; padding: 5px 10px; font-size: 12px; }
+.duplicates { margin-bottom: 12px; }
+.duplicates h2 { margin-top: 6px; }
+.dup-card { background: #12181f; border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+.dup-card .id-photos img { height: 140px; object-fit: contain; }
+.dup-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.dup-block { margin: 6px 0; }

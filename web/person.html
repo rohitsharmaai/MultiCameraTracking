@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Global Identity</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+  <style>
+    .detail { width: 100%; }
+    .detail-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .detail-head h1 { margin: 0; font-size: 26px; letter-spacing: 0.02em; }
+    .backlink { color: var(--new); text-decoration: none; font-size: 13px; }
+    .backlink:hover { text-decoration: underline; }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 16px 0 22px; }
+    .fact { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+    .fact b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+    .base-crops { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+    .base-crops figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .base-crops img { display: block; height: 220px; width: auto; max-width: 280px; object-fit: contain; background: #000; }
+    .base-crops figcaption { padding: 6px 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    /* Body on the left, face on the right, each filling its half of the page. */
+    .snap-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .snap-col h2 { position: sticky; top: 0; background: var(--bg); padding: 4px 0; z-index: 1; }
+    .snap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin-bottom: 22px; }
+    .snap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .snap img { display: block; width: 100%; height: 150px; object-fit: contain; background: #000; cursor: zoom-in; }
+    .snap .cap { padding: 5px 7px; font-size: 11px; color: var(--muted); line-height: 1.35; }
+    .snap .cap .mod { color: var(--text); font-weight: 600; }
+    .track-block { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 0 0 16px; background: #0f151b; }
+    .track-block h3 { margin: 0 0 8px; font-size: 15px; }
+    .track-block h4 { margin: 0 0 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .track-chip { display: inline-block; background: #16384a; color: var(--new); border-radius: 99px; padding: 2px 8px; margin: 0 6px 6px 0; font-size: 12px; }
+    table.obs { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 26px; }
+    table.obs th, table.obs td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    table.obs th { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+    .empty-note { color: var(--muted); font-size: 13px; }
+    #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 50; cursor: zoom-out; }
+    #lightbox.on { display: flex; }
+    #lightbox img { max-width: 92vw; max-height: 92vh; background: #000; }
+    .toolbar { display: flex; gap: 10px; align-items: center; margin: 18px 0 10px; }
+    .toolbar label { margin: 0; }
+    .toolbar select { background: #10151b; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; }
+    .btn { background: #1d4f3a; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+    .btn:hover { filter: brightness(1.15); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="detail-head">
+        <a class="backlink" href="/">← Back to live view</a>
+        <h1 id="pid">…</h1>
+        <span id="badge" class="badge"></span>
+        <button id="deletePerson" type="button" class="danger small" style="margin-left:auto;">Delete this identity</button>
+      </div>
+      <a class="backlink" id="liveLink" href="/">Open live view</a>
+    </header>
+    <div class="main" style="grid-template-columns: 1fr;">
+      <div class="col detail">
+        <div class="facts" id="facts"></div>
+        <h2>Reference crops (best per modality)</h2>
+        <div class="base-crops" id="baseCrops"></div>
+        <h2>Track comparison (why these tracks share this identity)</h2>
+        <div id="trackAudit" class="empty-note">—</div>
+        <h2>Same-time tracks (co-occurring) — most similar images</h2>
+        <div id="coTracks" class="empty-note">—</div>
+        <h2>Tracks on this identity</h2>
+        <div id="trackList" class="empty-note">—</div>
+        <h2>Images by track (body left · face right)</h2>
+        <div id="trackSections"></div>
+        <h2>Embedding observations</h2>
+        <table class="obs">
+          <thead>
+            <tr><th>Modality</th><th>Camera</th><th>Video</th><th>Frame</th><th>Track</th><th>Quality</th><th>Viewpoint</th><th>Model</th></tr>
+          </thead>
+          <tbody id="obsBody"></tbody>
+        </table>
+        <div class="empty-note" id="obsNote" hidden>No embedding observations recorded.</div>
+      </div>
+    </div>
+  </div>
+  <div id="lightbox"><img alt="crop" /></div>
+  <script src="/ui/person.js?v=4"></script>
+</body>
+</html>

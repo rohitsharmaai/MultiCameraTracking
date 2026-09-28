@@ -1,0 +1,57 @@
+name: multicam-reid
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: mct-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mct}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mct}
+      POSTGRES_DB: ${POSTGRES_DB:-mct}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init/01-pgvector.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mct} -d ${POSTGRES_DB:-mct}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - mct
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: mct-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-mct}:${POSTGRES_PASSWORD:-mct}@postgres:5432/${POSTGRES_DB:-mct}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      API_KEY: ${API_KEY:-change-me}
+      ALLOW_CPU_FALLBACK: "true"
+      MODELS_DIR: /app/models
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ../models:/app/models
+      - ../data:/app/data
+      - ../outputs:/app/outputs
+      - ../configs:/app/configs
+    networks:
+      - mct
+
+volumes:
+  pgdata:
+
+networks:
+  mct:
+    name: mct-net

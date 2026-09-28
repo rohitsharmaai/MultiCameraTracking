@@ -1,0 +1,63 @@
+# Directed camera graph. Edge times are in seconds.
+# Example matches the EPFL POM laboratory 4-camera layout (A/B/C/D).
+# Calibrate min/max transition times against site measurements.
+
+cameras:
+  - id: A
+    name: Lab camera 0
+  - id: B
+    name: Lab camera 1
+  - id: C
+    name: Lab camera 2
+  - id: D
+    name: Lab camera 3
+
+edges:
+  - from_camera: A
+    to_camera: B
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: east
+    confidence: 0.9
+  - from_camera: A
+    to_camera: C
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: south
+    confidence: 0.85
+  - from_camera: B
+    to_camera: A
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: west
+    confidence: 0.9
+  - from_camera: B
+    to_camera: D
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: south
+    confidence: 0.85
+  - from_camera: C
+    to_camera: A
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: north
+    confidence: 0.85
+  - from_camera: C
+    to_camera: D
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: east
+    confidence: 0.9
+  - from_camera: D
+    to_camera: B
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: north
+    confidence: 0.85
+  - from_camera: D
+    to_camera: C
+    min_transition_seconds: 0.5
+    max_transition_seconds: 90
+    expected_direction: west
+    confidence: 0.9

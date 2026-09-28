@@ -1,0 +1,28 @@
+# Camera sources. source_type is rtsp or video_file.
+# Lab 4-people files live under data/Lab/ (see DATA.md).
+
+cameras:
+  - camera_id: A
+    name: Lab camera 0
+    source_type: video_file
+    source_uri: data/Lab/4p-c0.avi
+    enabled: true
+    declared_for_video_testing: true
+  - camera_id: B
+    name: Lab camera 1
+    source_type: video_file
+    source_uri: data/Lab/4p-c1.avi
+    enabled: true
+    declared_for_video_testing: true
+  - camera_id: C
+    name: Lab camera 2
+    source_type: video_file
+    source_uri: data/Lab/4p-c2.avi
+    enabled: true
+    declared_for_video_testing: true
+  - camera_id: D
+    name: Lab camera 3
+    source_type: video_file
+    source_uri: data/Lab/4p-c3.avi
+    enabled: true
+    declared_for_video_testing: true

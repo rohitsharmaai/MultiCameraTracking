@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi-Camera Person ReID</title>
+  <link rel="stylesheet" href="/ui/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Multi-Camera Person ReID</h1>
+        <p>Local track IDs are not Global IDs. A reused Global ID means the same person was re-identified.</p>
+      </div>
+      <button id="reset" class="danger">Delete all gallery data</button>
+    </header>
+    <div class="main">
+      <aside class="col">
+        <h2>1. Load a camera video</h2>
+        <p class="meta">The file name is the camera source. Example: <code>4p-c0.avi</code> then later <code>4p-c1.avi</code>.</p>
+        <label>Video file</label>
+        <input id="file" type="file" accept="video/*,.avi,.mp4,.mkv" />
+        <label>Optional smoke-test frame cap (blank = full video)</label>
+        <input id="maxFrames" type="number" min="1" placeholder="e.g. 400" />
+        <label class="check">
+          <input id="requireBody" type="checkbox" />
+          Body embedding required to assign a Global ID
+        </label>
+        <label class="check">
+          <input id="requireFace" type="checkbox" />
+          Face embedding required to assign a Global ID
+        </label>
+        <p class="meta">Unchecked uses the current rule: body or face can be enough. Checked means that modality must pass the quality gate before a Global ID is assigned or reused.</p>
+        <button id="start" class="primary">Start processing</button>
+        <p class="legend">
+          <span class="dot-new"></span>New Global ID<br />
+          <span class="dot-same"></span>Re-identified in this video<br />
+          <span class="dot-reid"></span>Re-identified from another video<br />
+          <span class="dot-unres"></span>Unresolved / not yet assigned
+        </p>
+      </aside>
+      <section class="col stage">
+        <div class="stage-top">
+          <h2>2. Live detections</h2>
+          <div class="frame-wrap">
+            <img id="frame" alt="Processed frame will appear here" />
+          </div>
+          <div class="progress" id="progress">Idle</div>
+          <div class="bar"><i id="bar"></i></div>
+          <div class="transport-row">
+            <button id="playPause" class="btn btn-play" type="button" data-state="idle">▶ Play</button>
+            <button id="stop" class="btn btn-stop" type="button" disabled>■ Stop</button>
+            <div class="scrub-wrap">
+              <input id="scrub" type="range" min="0" max="0" value="0" disabled />
+              <div id="marks" class="marks"></div>
+            </div>
+            <span id="frameIds" class="frame-ids" title="">IDs on the current frame will appear here.</span>
+            <button id="followLive" type="button" class="btn" disabled>Follow live</button>
+            <a id="downloadVideo" class="download" hidden href="#">⬇ Download</a>
+          </div>
+        </div>
+        <div class="splitter" id="splitter" title="Drag to resize the video / log split"></div>
+        <div class="stage-bottom">
+          <h2>Event log</h2>
+          <div class="log" id="log"></div>
+          <h2>Saved annotated videos</h2>
+          <div id="savedVideos" class="meta">None yet.</div>
+        </div>
+      </section>
+      <aside class="col">
+        <h2>3. Global identities</h2>
+        <label class="check vis-all">
+          <input id="showAll" type="checkbox" checked />
+          Show all bounding boxes
+        </label>
+        <div class="gallery-actions">
+          <button id="deleteInactive" type="button" class="danger small">Delete inactive identities</button>
+          <button id="findDuplicates" type="button" class="primary small">Find similar bodies</button>
+        </div>
+        <div id="duplicates" class="duplicates" hidden></div>
+        <div id="gallery"><div class="empty">No identities yet. Process a video.</div></div>
+      </aside>
+    </div>
+  </div>
+  <script src="/ui/app.js?v=4"></script>
+</body>
+</html>
